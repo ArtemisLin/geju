@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>格局鉴定所</title>
+<style>
+/* 画风跟「拉拉鉴定所」「五行喜忌卡」「玄学天赋鉴定所」一套：粉色双线窗口、奶油底、像素字、四角星、浅色网格 */
+@font-face { font-family: 'Pixel'; src: url('ui/pixel.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Smiley'; src: url('ui/smiley.woff2') format('woff2'); font-display: swap; }
+:root {
+  --bg: #fdf5f8;
+  --grid: #f5dde7;
+  --line: #e98fb0;
+  --rose: #e2007a;
+  --rose-soft: #ffc6dc;
+  --bar: #fcd9e5;
+  --cream: #fff3df;
+  --cream2: #fffaf2;
+  --pink: #fbd6e2;
+  --purple: #4b3fd6;
+  --ink: #211d36;
+  --soft: #5b5670;
+  --mute: #a59fb5;
+  --gold: #f2a900;
+  --sans: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --pixel: 'Pixel', var(--sans);
+  --smiley: 'Smiley', var(--sans);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { color: var(--ink); font-family: var(--sans); overflow-x: hidden; }
+body {
+  min-height: 100vh; padding: 26px 16px 40px;
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.hidden { display: none !important; }
+.deco { position: fixed; pointer-events: none; z-index: 0; }
+
+/* ---------- 窗口 ---------- */
+.win { position: relative; z-index: 1; background: var(--cream); border: 2.5px solid var(--line); border-radius: 16px; box-shadow: 0 0 0 4px var(--cream2), 0 0 0 6px var(--line), 0 14px 34px rgba(226, 0, 122, .10); }
+.win > .bar { display: flex; align-items: center; justify-content: space-between; height: 42px; padding: 0 14px; background: var(--bar); border-bottom: 2.5px solid var(--line); border-radius: 13px 13px 0 0; font-family: var(--pixel); font-size: 18px; color: var(--rose); }
+.win > .bar .btns { display: flex; gap: 6px; }
+.win > .bar .btns i { width: 18px; height: 18px; border: 2px solid var(--line); border-radius: 4px; background: var(--cream2); }
+.win > .body { padding: 24px 24px 22px; }
+.label { font-family: var(--pixel); font-size: 16px; color: var(--rose); letter-spacing: 1px; margin: 18px 0 8px; display: flex; align-items: center; gap: 6px; }
+.label::before { content: '✦'; font-size: 14px; }
+.warn { color: var(--rose); font-weight: 700; }
+
+/* ---------- 首页 ---------- */
+.home { max-width: 480px; margin: 0 auto; }
+/* 封面：十神卡扇形摊开，像一副牌 */
+.fan { position: relative; width: 100%; height: 196px; margin: 6px 0 18px; }
+.fan img { position: absolute; left: 50%; bottom: 14px; width: 100px; margin-left: -50px; border-radius: 7px; transform-origin: 50% 100%; box-shadow: 0 6px 16px rgba(33, 29, 54, .22); }
+.title { font-family: var(--smiley); font-size: 46px; line-height: 1.1; color: var(--rose); text-align: center; text-shadow: 3px 3px 0 var(--rose-soft); letter-spacing: 2px; }
+.sub { text-align: center; color: var(--soft); font-size: 16px; margin-top: 8px; }
+.ask { text-align: center; font-family: var(--pixel); font-size: 15px; color: var(--purple); margin-top: 10px; line-height: 1.6; }
+.how { color: var(--soft); font-size: 15px; line-height: 1.6; }
+.name-in { display: block; width: 100%; height: 50px; border: 2px solid var(--line); border-radius: 12px; background: var(--cream2); padding: 0 16px; font-family: var(--sans); font-size: 18px; color: var(--ink); outline: none; }
+.name-in::placeholder { color: #b3aec2; }
+.name-in:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-soft); }
+.picks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; text-align: center; margin-top: 10px; }
+.picks .pos { font-family: var(--pixel); font-size: 15px; color: var(--soft); margin-bottom: 5px; }
+.slot { display: block; width: 100%; height: 56px; border-radius: 10px; border: 2px solid var(--line); background: var(--cream2); font-family: var(--smiley); font-size: 32px; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.slot.ph { font-family: var(--pixel); font-size: 16px; color: var(--mute); }
+.slot + .slot { margin-top: 8px; }
+.slot.on { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-soft); background: #fff; }
+.kb { margin-top: 14px; border: 2px dashed var(--line); border-radius: 12px; padding: 10px 10px 12px; background: var(--cream2); }
+.kb .t { font-family: var(--pixel); font-size: 15px; color: var(--rose); margin-bottom: 9px; }
+.keys { display: grid; gap: 8px; }
+.keys.k5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.keys.k6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.key { height: 58px; border-radius: 10px; border: 2px solid currentColor; background: #fff; font-family: var(--smiley); font-size: 28px; line-height: 1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; -webkit-tap-highlight-color: transparent; }
+.key small { font-family: var(--pixel); font-size: 11px; opacity: .85; }
+.key:active { transform: translateY(1px); }
+.key.unk { grid-column: 1 / -1; height: 44px; font-family: var(--pixel); font-size: 16px; color: var(--soft); }
+.key.cur { outline: 3px solid var(--rose); outline-offset: 2px; }
+.kb-foot { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 10px; }
+.kb-foot:empty { display: none; }
+.kb-foot button { font-family: var(--pixel); font-size: 15px; padding: 6px 13px; border-radius: 15px; border: 2px solid var(--line); background: #fff; color: var(--rose); cursor: pointer; }
+.kb-foot button.clr { color: var(--soft); }
+.acts { display: flex; gap: 12px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+.btn { font-family: var(--pixel); font-size: 19px; padding: 11px 28px; border-radius: 26px; border: 2.5px solid var(--rose); cursor: pointer; background: var(--rose); color: #fff; letter-spacing: 1px; text-decoration: none; box-shadow: 0 4px 0 #b30062; }
+.btn.big { width: 100%; font-size: 21px; padding: 13px 0; }
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b30062; }
+.btn.ghost { background: var(--cream2); color: var(--rose); box-shadow: 0 4px 0 var(--line); border-color: var(--line); }
+.hist { list-style: none; }
+.hist li { display: flex; align-items: center; gap: 8px; border-bottom: 1.5px dashed var(--pink); }
+.hist li a { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; text-decoration: none; color: var(--ink); }
+.hist li a b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 7em; }
+.hist li a span { font-family: var(--smiley); font-size: 20px; letter-spacing: 1px; white-space: nowrap; }
+.hist li a small { margin-left: auto; font-family: var(--pixel); font-size: 13px; color: var(--mute); white-space: nowrap; }
+.hist li button { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); background: var(--cream2); color: var(--soft); font-size: 16px; line-height: 1; cursor: pointer; }
+.hist-foot { display: flex; justify-content: space-between; margin-top: 8px; }
+.hist-foot button { font-family: var(--pixel); font-size: 14px; border: 0; background: none; color: var(--rose); cursor: pointer; padding: 4px 0; }
+.hist-foot button.clr { color: var(--mute); }
+.err, .hint { text-align: center; font-size: 15px; min-height: 22px; margin-top: 10px; }
+.err { color: var(--rose); }
+.hint { color: var(--soft); }
+
+/* ---------- 结果页：鉴定报告 ---------- */
+.result { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 26px; }
+.report .head { text-align: center; }
+.report .head b { display: block; font-family: var(--smiley); font-size: 30px; color: var(--rose); text-shadow: 2px 2px 0 var(--rose-soft); letter-spacing: 1px; }
+.report .head span { display: block; color: var(--soft); font-size: 14px; margin-top: 4px; }
+.pillars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; }
+.pillars .col { border: 2px solid var(--line); border-radius: 12px; background: var(--cream2); padding: 6px 0 8px; }
+.pillars .col.day { background: var(--pink); }
+.pillars .pos { font-family: var(--pixel); font-size: 13px; color: var(--soft); }
+.pillars .gz { font-family: var(--smiley); font-size: 30px; line-height: 1.15; color: var(--ink); }
+.pillars .ss { font-family: var(--pixel); font-size: 12px; color: var(--rose); line-height: 1.35; }
+.steps { list-style: none; counter-reset: st; }
+.steps li { position: relative; padding: 7px 0 7px 32px; font-size: 15.5px; line-height: 1.5; border-bottom: 1.5px dashed var(--pink); opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; }
+.steps li.on { opacity: 1; transform: none; }
+.steps li::before { counter-increment: st; content: counter(st); position: absolute; left: 0; top: 8px; width: 22px; height: 22px; border-radius: 6px; background: var(--rose); color: #fff; font-family: var(--pixel); font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.steps li.str::before { content: '强'; background: var(--purple); }
+.verdict { margin-top: 14px; text-align: center; font-family: var(--smiley); font-size: 24px; line-height: 1.45; color: var(--rose); opacity: 0; transition: opacity .5s; }
+.verdict.on { opacity: 1; }
+
+/* ---------- 牌：720 宽，高度跟着内容走 ---------- */
+.stage { width: 100%; min-width: 0; overflow: hidden; padding: 6px 0 4px; scroll-margin-top: 12px; }
+.scene { perspective: 2400px; cursor: pointer; margin: 0 auto; }
+.flipper { position: relative; transition: transform 1.1s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
+.flipper.closed { transform: rotateY(180deg); }
+.flipper.done { transform: none; transition: none; transform-style: flat; }
+.flipper.done .back { display: none; }
+.front, .back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.back { position: absolute; inset: 0; transform: rotateY(180deg); }
+.front .card, .back .card { position: absolute; top: 0; left: 0; }
+
+.card { width: 720px; transform-origin: top left; background: var(--cream); border-radius: 30px; overflow: hidden; box-shadow: 0 18px 50px rgba(226, 0, 122, .16); }
+.card .frame { position: absolute; inset: 14px; border: 3px solid var(--line); border-radius: 20px; pointer-events: none; }
+.card .frame::after { content: ''; position: absolute; inset: 6px; border: 1.5px solid var(--line); border-radius: 14px; }
+.card .tb { position: absolute; top: 26px; left: 38px; right: 38px; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: var(--bar); border: 2.5px solid var(--line); border-radius: 12px; font-family: var(--pixel); font-size: 21px; color: var(--rose); }
+.card .tb .btns { display: flex; gap: 7px; flex: none; }
+.card .tb .t { display: flex; align-items: baseline; min-width: 0; white-space: nowrap; overflow: hidden; }
+.card .tb .nm { font-family: var(--sans); font-weight: 900; color: var(--rose); margin: 0 3px 0 12px; letter-spacing: 1px; overflow: hidden; text-overflow: ellipsis; }
+.card .tb .btns i { width: 20px; height: 20px; border: 2px solid var(--line); border-radius: 4px; background: var(--cream2); }
+.cbody { position: relative; padding: 112px 44px 44px; }
+.intro { text-align: center; font-family: var(--pixel); font-size: 28px; color: var(--soft); letter-spacing: 2px; }
+.gename { text-align: center; font-family: var(--smiley); font-size: 104px; line-height: 1.08; color: var(--rose); text-shadow: 5px 5px 0 var(--rose-soft); letter-spacing: 6px; }
+.tagline { text-align: center; font-size: 34px; font-weight: 700; color: var(--ink); margin-top: 2px; }
+.tagline::before, .tagline::after { color: var(--line); font-weight: 400; }
+.tagline::before { content: '「'; }
+.tagline::after { content: '」'; }
+.lvline { text-align: center; font-family: var(--pixel); font-size: 25px; color: var(--soft); margin-top: 6px; letter-spacing: 1px; }
+.lvline b { font-weight: 400; color: var(--purple); }
+.artbox { position: relative; width: 420px; margin: 22px auto 0; }
+.artbox .pic { display: block; width: 420px; height: 630px; object-fit: cover; border-radius: 14px; box-shadow: 0 0 0 6px var(--cream2), 0 0 0 8px var(--pink), 0 14px 30px rgba(33, 29, 54, .18); }
+.artbox .st1 { position: absolute; top: -26px; left: -46px; width: 60px; }
+.artbox .st2 { position: absolute; bottom: 70px; right: -40px; width: 44px; }
+.seal { position: absolute; bottom: -22px; right: -60px; z-index: 3; width: 108px; height: 108px; border: 3px solid var(--rose); border-radius: 50%; color: var(--rose); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-14deg); background: rgba(255, 250, 242, .94); font-weight: 700; line-height: 1.15; }
+.seal::before { content: ''; position: absolute; inset: 5px; border: 1px solid var(--rose); border-radius: 50%; }
+.seal b { font-size: 19px; letter-spacing: 1px; }
+.seal i { font-style: normal; font-size: 13px; letter-spacing: 1px; margin-top: 3px; }
+.artcap { text-align: center; font-family: var(--pixel); font-size: 22px; color: var(--soft); margin-top: 14px; }
+
+.sec { margin-top: 36px; }
+.sec > h4 { font-family: var(--pixel); font-size: 30px; color: var(--rose); font-weight: 400; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.sec > h4::before { content: '✦'; font-size: 24px; }
+.sec p, .sec li { font-size: 27px; line-height: 1.6; color: var(--ink); }
+.sec ul { list-style: none; }
+.sec ul li { position: relative; padding-left: 32px; margin-bottom: 10px; }
+.sec ul li::before { content: '✦'; position: absolute; left: 0; color: var(--rose); font-size: 21px; top: 6px; }
+.sec .small { font-size: 23px; color: var(--soft); margin-top: 8px; line-height: 1.6; }
+
+/* 大运和三年流年 */
+.dy { border: 2.5px solid var(--line); border-radius: 18px; background: var(--cream2); padding: 16px 18px 6px; }
+.dy + .dy { margin-top: 16px; }
+.dyh { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dyh .k { font-family: var(--pixel); font-size: 24px; color: var(--soft); }
+.dyh b { font-family: var(--smiley); font-weight: 400; font-size: 48px; line-height: 1; letter-spacing: 2px; }
+.dyh .yrs { font-family: var(--pixel); font-size: 24px; color: var(--soft); }
+.rb { display: inline-block; font-family: var(--pixel); font-size: 24px; padding: 5px 16px; border-radius: 18px; color: #fff; white-space: nowrap; }
+.dyh .rb { margin-left: auto; font-size: 27px; padding: 6px 20px; }
+.r-好运 { background: var(--rose); }
+.r-机会 { background: var(--purple); }
+.r-平常 { background: #b3aec2; }
+.r-小坎 { background: var(--gold); }
+.r-差运, .r-坏运 { background: var(--soft); }
+.dyp { font-size: 24px !important; color: var(--soft) !important; margin: 8px 0 6px; }
+.yr { border-top: 2px dashed var(--pink); padding: 12px 0 10px; }
+.yrh { display: flex; align-items: center; gap: 12px; }
+.yrh .y { font-family: var(--smiley); font-size: 40px; color: var(--ink); }
+.yrh .gz { font-family: var(--smiley); font-size: 40px; letter-spacing: 2px; }
+.yrh .rb { margin-left: auto; }
+.yrm { font-family: var(--pixel); font-size: 21px; color: var(--soft); margin: 4px 0 2px; }
+.yrm i { font-style: normal; }
+.yrm .x { color: var(--rose); }
+.yrm .j { color: var(--soft); }
+.yr p { font-size: 25px !important; line-height: 1.55 !important; }
+.cb { color: var(--purple); font-weight: 700; }
+
+/* 喜好 */
+.likes { display: grid; gap: 12px; }
+.likes .row { display: flex; gap: 12px; align-items: flex-start; }
+.likes .tag { flex: none; width: 48px; height: 48px; border-radius: 12px; color: #fff; font-family: var(--pixel); font-size: 26px; display: flex; align-items: center; justify-content: center; }
+.likes .tag.yi { background: var(--rose); }
+.likes .tag.ji { background: var(--soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 16px; border-radius: 22px; border: 2px solid var(--line); background: #fff; font-size: 24px; }
+.chip b { font-family: var(--smiley); font-weight: 400; font-size: 30px; color: var(--rose); }
+.chips.ji .chip { border-color: #d6d0e0; }
+.chips.ji .chip b { color: var(--soft); }
+
+.foot { margin-top: 34px; padding-top: 18px; border-top: 2px dashed var(--pink); text-align: center; font-family: var(--pixel); font-size: 21px; color: var(--soft); letter-spacing: 1px; line-height: 1.8; }
+
+/* 牌背 */
+.back .card { background-color: var(--pink); background-image: linear-gradient(rgba(233,143,176,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(233,143,176,.35) 1px, transparent 1px); background-size: 36px 36px; }
+.back .mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.back .mid img { width: 110px; margin-bottom: 10px; }
+.back .mid b { font-family: var(--smiley); font-size: 64px; color: var(--rose); text-shadow: 4px 4px 0 #fff; letter-spacing: 4px; font-weight: 400; }
+.back .mid span { font-family: var(--pixel); font-size: 22px; color: var(--rose); margin-top: 16px; background: var(--cream2); border: 2px solid var(--line); border-radius: 18px; padding: 6px 20px; }
+
+/* 手机保存图 */
+.shot { position: fixed; inset: 0; background: rgba(33, 29, 54, .82); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; z-index: 9; }
+.shot img { max-width: 100%; max-height: 80vh; border-radius: 14px; }
+.shot p { color: #fff; font-size: 17px; text-align: center; line-height: 1.5; }
+
+@media (max-width: 600px) {
+  body { padding: 16px 12px 30px; }
+  .win > .body { padding: 18px 14px 18px; }
+  .title { font-size: 42px; }
+  .fan { height: 168px; }
+  .fan img { width: 84px; margin-left: -42px; }
+}
+</style>
+</head>
+<body>
+
+<img class="deco" src="ui/star-y.png" alt="" style="left:2%;top:120px;width:46px">
+<img class="deco" src="ui/star-w.png" alt="" style="right:3%;top:60px;width:38px">
+<img class="deco" src="ui/star-w.png" alt="" style="right:6%;bottom:110px;width:30px">
+
+<!-- 首页：选八字 -->
+<section class="home hidden" id="home">
+  <div class="win">
+    <div class="bar"><span>格局鉴定所.exe</span><span class="btns"><i></i><i></i><i></i></span></div>
+    <div class="body">
+      <div class="fan" id="fan"></div>
+      <h1 class="title">格局鉴定所</h1>
+      <p class="sub">本鉴定仅供娱乐，<span class="warn">切勿当真</span></p>
+      <p class="ask">你是什么格？当前大运好不好？<br>最近三年怎么走？</p>
+      <div class="hidden" id="histWrap">
+        <div class="label">鉴定过的八字（点一下直接看结果）</div>
+        <ul class="hist" id="hist"></ul>
+        <div class="hist-foot"><button type="button" id="histMore"></button><button type="button" class="clr" id="histClr">清空记录</button></div>
+      </div>
+      <div class="label">你的名字</div>
+      <input class="name-in" id="nm" maxlength="10" placeholder="可以不填，填了会印在牌上" autocomplete="off">
+      <div class="label">送检八字</div>
+      <p class="how">照着你的八字排盘（用哪个排盘 App 都可以），从年柱天干开始点字，选完会自动跳到下一格。点格子可以改。不知道时辰的，时柱点「不知道时辰」。</p>
+      <div class="picks" id="picks"></div>
+      <div class="kb hidden" id="kb"><div class="t" id="kbT"></div><div class="keys" id="keys"></div><div class="kb-foot" id="kbFoot"></div></div>
+      <div class="acts"><button class="btn big" id="go">鉴定我的格局 ▶</button></div>
+      <p class="err" id="err"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 结果页 -->
+<div class="result hidden" id="result">
+  <section class="win report">
+    <div class="bar"><span>鉴定报告.exe</span><span class="btns"><i></i><i></i><i></i></span></div>
+    <div class="body">
+      <div class="head"><b>谷雨悟道 · 格局鉴定所</b><span>八字格局鉴定报告 · 本鉴定仅供娱乐，<span class="warn">切勿当真</span></span></div>
+      <div class="label" id="sampleLab">送检八字</div>
+      <div class="pillars" id="pillars"></div>
+      <div class="label">定格过程</div>
+      <ol class="steps" id="steps"></ol>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </section>
+
+  <div class="stage" id="stage">
+    <div class="scene" id="scene">
+      <div class="flipper closed" id="flipper">
+        <div class="front"><div class="card" id="card">
+          <div class="frame"></div>
+          <div class="tb"><span id="num"></span><span class="btns"><i></i><i></i><i></i></span></div>
+          <div class="cbody">
+            <div class="intro">经鉴定，你是</div>
+            <div class="gename" id="gename"></div>
+            <div class="tagline" id="tagline"></div>
+            <div class="lvline" id="lvline"></div>
+            <div class="artbox">
+              <img class="pic" id="art" alt="">
+              <img class="st1" src="ui/star-y.png" alt="">
+              <img class="st2" src="ui/star-w.png" alt="">
+              <div class="seal"><b>鉴定专用</b><i>仅供娱乐</i></div>
+            </div>
+            <div class="artcap hidden" id="artcap"></div>
+            <div class="sec"><h4>当前大运 · 最近三年流年</h4><div id="luck"></div></div>
+            <div class="sec"><h4 id="featH"></h4><p id="feat"></p></div>
+            <div class="sec"><h4>你的喜好</h4><div class="likes" id="likes"></div><p class="small" id="notes"></p></div>
+            <div class="sec"><h4>你需要怎么做</h4><ul id="todo"></ul></div>
+            <div class="sec"><h4>简单解析</h4><ul id="jx"></ul></div>
+            <div class="foot" id="foot"></div>
+          </div>
+        </div></div>
+        <div class="back"><div class="card" id="cardBack">
+          <div class="frame"></div>
+          <div class="mid"><img src="ui/star-y.png" alt=""><b>格局鉴定所</b><span id="backHint">鉴定中……</span></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="acts hidden" id="acts">
+      <button class="btn" id="save">保存 / 分享鉴定牌</button>
+      <a class="btn ghost" href="index.html">再鉴定一个 / 看记录</a>
+    </div>
+    <p class="hint" id="saveHint"></p>
+  </div>
+</div>
+
+<script src="html2canvas.min.js"></script>
+<script src="bazi-core.js"></script>
+<script src="wuxing.js"></script>
+<script src="geju.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const q = new URLSearchParams(location.search);
+const b = (q.get('b') || '').trim();
+const who = (q.get('name') || '').trim().slice(0, 10);
+
+// 字按五行上色：天干看本身，地支看本气（配色跟谷雨八字插件一样）
+// 用函数声明（会提前生效），因为页面一打开就调用 showHome / showResult
+function isGan(c) { return Geju.GAN.includes(c); }
+function wxOf(c) { return isGan(c) ? Geju.GAN_WX[c] : Geju.GAN_WX[Geju.BQ[c]]; }
+function yyOf(c) { return (isGan(c) ? Geju.GAN.indexOf(c) : Geju.ZHI.indexOf(c)) % 2 === 0 ? '阳' : '阴'; }
+function colorOf(c) { return { 木: '#1e8e47', 火: '#c93a28', 土: '#8a5416', 金: '#c29200', 水: '#1f6dbf' }[wxOf(c)]; }
+function gz(str) { return [...String(str)].map(c => (isGan(c) || Geju.ZHI.includes(c)) ? '<span style="color:' + colorOf(c) + '">' + c + '</span>' : esc(c)).join(''); }
+
+/* ---------- 鉴定记录：存在这台手机的浏览器里，最多 30 条；读不到就当没有 ---------- */
+const HIST_KEY = 'geju-history';
+function loadHist() { try { const v = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(v) ? v.filter(x => x && Geju.parse(x.b)) : []; } catch (e) { return []; } }
+function saveHist(list) { try { localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} }
+function remember(e) { saveHist([e, ...loadHist().filter(x => !(x.b === e.b && (x.name || '') === (e.name || '')))]); }
+function showHist() {
+  const list = loadHist();
+  $('histWrap').classList.toggle('hidden', !list.length);
+  if (!list.length) return;
+  const all = $('hist').dataset.all === '1', shown = all ? list : list.slice(0, 5);
+  const day = t => { const d = new Date(t); return isNaN(d) ? '' : (d.getMonth() + 1) + '月' + d.getDate() + '日'; };
+  $('hist').innerHTML = shown.map((x, i) => '<li><a href="?b=' + encodeURIComponent(x.b) + (x.name ? '&name=' + encodeURIComponent(x.name) : '') + '&open=1">' +
+    '<b>' + esc(x.name || '没写名字') + '</b><span>' + gz(Geju.parse(x.b).join(' ')) + '</span><small>' + day(x.t) + '</small></a>' +
+    '<button type="button" data-i="' + i + '" aria-label="删掉这条">×</button></li>').join('');
+  $('hist').querySelectorAll('button').forEach(el => { el.onclick = () => { const l = loadHist(); l.splice(+el.dataset.i, 1); saveHist(l); showHist(); }; });
+  $('histMore').textContent = list.length > 5 ? (all ? '收起' : '显示全部 ' + list.length + ' 条') : '';
+  $('histMore').onclick = () => { $('hist').dataset.all = all ? '' : '1'; showHist(); };
+  $('histClr').onclick = () => { if (confirm('清空全部鉴定记录？')) { saveHist([]); showHist(); } };
+}
+
+/* ---------- 首页：封面扇形牌 + 点格子选字 ---------- */
+function showFan() {
+  const cards = ['zhengyin', 'shishen', 'qisha', 'piancai', 'shangguan'];
+  const rot = [-18, -9, 0, 9, 18], dx = [-92, -46, 0, 46, 92], dy = [14, 4, 0, 4, 14];
+  const small = matchMedia('(max-width: 600px)').matches, k = small ? 0.83 : 1;
+  $('fan').innerHTML = cards.map((c, i) => '<img src="art/' + c + '.webp" alt="" style="z-index:' + (i === 2 ? 5 : 5 - Math.abs(i - 2)) + ';transform:translate(' + dx[i] * k + 'px,' + dy[i] * k + 'px) rotate(' + rot[i] + 'deg)">').join('');
+}
+
+function showHome() {
+  $('home').classList.remove('hidden');
+  showFan();
+  showHist();
+  const cols = ['年柱', '月柱', '日柱', '时柱'];
+  const g = ['', '', '', ''], z = ['', '', '', ''];
+  let act = { t: 'g', i: 0 };
+  const order = [0, 1, 2, 3].flatMap(i => [{ t: 'g', i }, { t: 'z', i }]);
+  const val = s => (s.t === 'g' ? g : z)[s.i];
+  const nextEmpty = () => order.find(s => !val(s)) || null;
+
+  function render() {
+    $('picks').innerHTML = cols.map((c, i) => '<div><div class="pos">' + c + '</div>' + ['g', 'z'].map(t => {
+      const v = (t === 'g' ? g : z)[i], on = act && act.t === t && act.i === i;
+      const txt = v === '?' ? '？' : v || (t === 'g' ? '天干' : '地支');
+      return '<button type="button" class="slot' + (v ? '' : ' ph') + (on ? ' on' : '') + '" data-t="' + t + '" data-i="' + i + '"' +
+        (v && v !== '?' ? ' style="color:' + colorOf(v) + '"' : '') + '>' + txt + '</button>';
+    }).join('') + '</div>').join('');
+    $('picks').querySelectorAll('.slot').forEach(el => { el.onclick = () => { act = { t: el.dataset.t, i: +el.dataset.i }; render(); }; });
+    $('kb').classList.remove('hidden');
+    const filled = order.some(s => val(s));
+    const foot = [];
+    if (filled && (!act || order.findIndex(s => s.t === act.t && s.i === act.i) > 0)) foot.push('<button type="button" data-a="back">⌫ 退一格</button>');
+    if (act && act.t === 'z' && g[act.i] && g[act.i] !== '?') foot.push('<button type="button" data-a="gan">改天干</button>');
+    if (filled) foot.push('<button type="button" class="clr" data-a="clear">清空重选</button>');
+    $('kbFoot').innerHTML = foot.join('');
+    $('kbFoot').querySelectorAll('button').forEach(el => { el.onclick = () => tool(el.dataset.a); });
+    if (!act) {
+      $('kbT').textContent = '八个字都选好了。要改哪个字，点上面那一格。';
+      $('keys').className = 'keys'; $('keys').innerHTML = '';
+      return;
+    }
+    const { t, i } = act;
+    const known = g[i] && g[i] !== '?';
+    const keys = t === 'g' ? [...Geju.GAN] : [...Geju.ZHI].filter((x, k) => !known || k % 2 === Geju.GAN.indexOf(g[i]) % 2);
+    $('kbT').textContent = '选' + cols[i] + (t === 'g' ? '的天干' : '的地支') + (t === 'z' && known ? '（' + g[i] + '是' + yyOf(g[i]) + '干，只配' + yyOf(g[i]) + '支）' : '');
+    $('keys').className = 'keys ' + (keys.length === 10 ? 'k5' : 'k6');
+    const cur = (t === 'g' ? g : z)[i];
+    $('keys').innerHTML = keys.map(x => '<button type="button" class="key' + (x === cur ? ' cur' : '') + '" data-v="' + x + '" style="color:' + colorOf(x) + '">' + x + '<small>' + yyOf(x) + wxOf(x) + '</small></button>').join('') +
+      (i === 3 ? '<button type="button" class="key unk" data-v="?">不知道时辰</button>' : '');
+    $('keys').querySelectorAll('.key').forEach(el => { el.onclick = () => pick(el.dataset.v); });
+  }
+
+  // 退一格、改天干、清空重选
+  function tool(a) {
+    $('err').textContent = '';
+    if (a === 'clear') { g.fill(''); z.fill(''); act = order[0]; }
+    else if (a === 'gan') { act = { t: 'g', i: act.i }; }
+    else if (a === 'back') {
+      const k = act ? order.findIndex(s => s.t === act.t && s.i === act.i) : order.length;
+      let j = k - 1;
+      while (j > 0 && !val(order[j])) j--;          // 跳过还空着的格子，退到上一个选过的字
+      const p = order[j];
+      if (val(p) === '?') { g[3] = ''; z[3] = ''; act = { t: 'g', i: 3 }; }
+      else { (p.t === 'g' ? g : z)[p.i] = ''; act = p; }
+    }
+    render();
+  }
+
+  function pick(v) {
+    const { t, i } = act;
+    $('err').textContent = '';
+    if (v === '?') { g[3] = '?'; z[3] = '?'; act = nextEmpty(); render(); return; }
+    if (t === 'g') {
+      g[i] = v;
+      if (z[i] === '?' || (z[i] && Geju.ZHI.indexOf(z[i]) % 2 !== Geju.GAN.indexOf(v) % 2)) z[i] = '';   // 阴阳对不上就清掉地支
+      act = !z[i] ? { t: 'z', i } : nextEmpty();
+    } else {
+      if (g[i] === '?') g[i] = '';
+      z[i] = v;
+      act = nextEmpty();
+    }
+    render();
+  }
+  render();
+
+  $('go').onclick = () => {
+    let s = '';
+    for (let i = 0; i < 4; i++) {
+      if (i === 3 && (g[3] === '?' || z[3] === '?')) break;
+      if (!g[i] || !z[i]) { $('err').textContent = '「' + cols[i] + '」还没选完'; act = { t: !g[i] ? 'g' : 'z', i }; render(); return; }
+      s += g[i] + z[i];
+    }
+    if (!Geju.parse(s)) { $('err').textContent = '有一柱的天干地支配不上（阳干配阳支、阴干配阴支），再对一下排盘'; return; }
+    const nm = $('nm').value.trim();
+    location.search = '?b=' + encodeURIComponent(s) + (nm ? '&name=' + encodeURIComponent(nm) : '');
+  };
+}
+
+/* ---------- 结果页 ---------- */
+// 大运：按八个字在 1960–2015 年里反推出生日子（这几十年里只有一个），再用谷雨八字插件的排盘引擎排大运；一律按女命排
+function dayunOf(bz) {
+  try {
+    if (!window.BaziCore) return null;
+    const P = Geju.parse(bz);
+    if (!P) return null;
+    const hours = P.length === 4 ? [P[3]] : [...Geju.ZHI].map((x, i) => Geju.GAN[((Geju.GAN.indexOf(P[2][0]) % 5) * 2 + i) % 10] + x);
+    for (const h of hours) {
+      const o = BaziCore.reverseFourPillars(P[0], P[1], P[2], h, { startYear: 1960, endYear: 2015 })[0];
+      if (!o) continue;
+      const c = BaziCore.computeChart({ clock: { y: o.y, m: o.m, d: o.d, hh: o.hh, mi: o.mi }, gender: '坤', trueSolar: false });
+      return c.daYun.map(d => ({ gz: d.ganZhi, startYear: d.startYear }));
+    }
+  } catch (e) {}
+  return null;
+}
+// 今年：流年从立春换，立春前算上一年
+function thisYear() {
+  const d = new Date();
+  let y = d.getFullYear();
+  try {
+    const c = BaziCore.computeChart({ clock: { y, m: d.getMonth() + 1, d: d.getDate(), hh: 12, mi: 0 }, gender: '坤', trueSolar: false });
+    if (c.pillars.year !== Geju.yearGZ(y)) y -= 1;
+  } catch (e) { if (d.getMonth() === 0 || (d.getMonth() === 1 && d.getDate() < 4)) y -= 1; }
+  return y;
+}
+
+const STEP_SAY = { 好运: '这几年大环境帮你，底子厚，可以放开手脚。', 坏运: '这几年大环境有点逆风，稳扎稳打，别硬冲。' };
+const XI = v => (v ? '<i class="x">喜</i>' : '<i class="j">忌</i>');
+const comboTxt = cs => cs.length ? '有<span class="cb">「' + cs.map(c => c.n).join('」「') + '」</span>：' + cs.map(c => c.say).join('；') + '。' : '';
+
+function luckHTML(r) {
+  const L = r.luck;
+  let h = '';
+  if (!L.hasDayun) h += '<p class="small" style="margin-bottom:10px">只认 1960–2015 年出生，这个八字排不出大运，这次只看流年。</p>';
+  L.groups.forEach((gp, gi) => {
+    h += '<div class="dy">';
+    if (gp.step) {
+      const cur = gi === 0;
+      h += '<div class="dyh"><span class="k">' + (cur ? '当前大运' : '下一步大运') + '</span><b>' + gz(gp.gz) + '</b><span class="yrs">' + gp.from + '–' + gp.to + '</span><span class="rb r-' + gp.label + '">' + gp.label + '</span></div>';
+      h += '<p class="dyp">前五年' + gz(gp.gz[0]) + '（' + gp.gS + '）' + (r.xi[gp.gS] ? '喜' : '忌') + '，后五年' + gz(gp.gz[1]) + '（' + gp.zS + '）' + (r.xi[gp.zS] ? '喜' : '忌') + '，' +
+        (cur ? '你现在在' + gp.firstHalf + '五年。' : gp.firstYear + '年进' + gp.firstHalf + '五年。') + STEP_SAY[gp.label] + comboTxt(gp.combos) + '</p>';
+    }
+    for (const x of gp.rows) {
+      h += '<div class="yr"><div class="yrh"><span class="y">' + x.y + '</span><span class="gz">' + gz(x.gz) + '</span><span class="rb r-' + x.res + '">' + x.resName + '</span></div>' +
+        '<div class="yrm">' + gz(x.gz[0]) + x.a + XI(r.xi[x.a]) + '　' + gz(x.gz[1]) + x.b + XI(r.xi[x.b]) + (x.step ? '　｜　运：' + gz(x.yunCh) + x.yunSS + XI(x.yun) : '') + '</div>' +
+        '<p>' + x.say + comboTxt(x.combos) + x.tip + (x.chong ? '流年' + gz(x.gz[1]) + '冲你的日支' + gz(x.dz) + '，容易有变化（比如搬家、换工作），提前留点余地。' : '') + '</p></div>';
+    }
+    h += '</div>';
+  });
+  return h;
+}
+
+function showResult() {
+  const dy = dayunOf(b);
+  const r = Geju.judge(b, { year: thisYear(), dayun: dy });
+  if (r.error) { showHome(); $('err').textContent = '链接里的八字看不懂，请在上面重新选一次'; return; }
+  $('result').classList.remove('hidden');
+  if (q.has('only')) { document.querySelector('.report').classList.add('hidden'); document.body.style.padding = '10px'; }
+  document.title = r.ge + ' · 格局鉴定牌';
+  remember({ b: r.pillars.join(''), name: who, t: Date.now() });
+
+  // 报告
+  const pos = ['年', '月', '日', '时'];
+  if (who) $('sampleLab').textContent = '送检八字 · ' + who;
+  $('pillars').innerHTML = r.pillars.map((p, i) =>
+    '<div class="col' + (i === 2 ? ' day' : '') + '"><div class="pos">' + pos[i] + '柱</div><div class="gz">' + gz(p[0]) + '<br>' + gz(p[1]) + '</div><div class="ss">' + r.tg[i] + '<br>' + r.zg[i] + '</div></div>'
+  ).join('') + (r.has4 ? '' : '<div class="col"><div class="pos">时柱</div><div class="gz">？<br>？</div><div class="ss">没有时辰</div></div>');
+  const sideTxt = r.cong ? '接近' + r.cong + '，喜忌反过来看' : (r.strongSide ? '算身强' : '算身弱');
+  $('steps').innerHTML = r.steps.map(s => '<li>' + gz(s) + '</li>').join('') +
+    '<li class="str">强弱值 ' + Math.round(r.index) + ' · ' + r.level + '，' + sideTxt + '（跟五行喜忌卡同一套算法）</li>';
+  const verdict = '经鉴定：' + r.ge + '\n「' + r.tag + '」';
+  $('verdict').style.whiteSpace = 'pre-line';
+
+  // 牌
+  const no = 'No.' + String(r.no).padStart(2, '0');
+  $('num').className = 't';
+  $('num').innerHTML = who
+    ? '<span>' + no + '</span><b class="nm" style="font-size:' + (who.length <= 3 ? 40 : who.length <= 6 ? 31 : 24) + 'px">' + esc(who) + '</b><span>的格局鉴定牌.exe</span>'
+    : '<span>' + no + '  格局鉴定牌.exe</span>';
+  $('gename').textContent = r.ge;
+  $('tagline').textContent = r.tag;
+  $('lvline').innerHTML = '强弱值 ' + Math.round(r.index) + ' · <b>' + r.level + '</b>' + (r.cong ? ' · 接近' + r.cong : '');
+  $('art').src = 'art/' + r.art + '.webp';
+  $('art').alt = r.ge;
+  if (r.ge === '建禄格' || r.ge === '羊刃格') { $('artcap').textContent = r.ge + '：月令是' + r.artSS + '，牌面就是' + r.artSS; $('artcap').classList.remove('hidden'); }
+  $('luck').innerHTML = luckHTML(r);
+  $('featH').textContent = r.ge + '的特征';
+  $('feat').textContent = r.feat;
+  $('likes').innerHTML = '<div class="row"><span class="tag yi">喜</span><div class="chips">' + r.like.map(x => '<span class="chip"><b>' + x.n + '</b>' + x.w + '</span>').join('') + '</div></div>' +
+    '<div class="row"><span class="tag ji">忌</span><div class="chips ji">' + r.dislike.map(x => '<span class="chip"><b>' + x.n + '</b>' + x.w + '</span>').join('') + '</div></div>';
+  $('notes').textContent = r.notes.length ? r.notes.join('；') + '。' : '';
+  $('todo').innerHTML = r.todo.map(t => '<li>' + esc(t) + '</li>').join('');
+  const jx = [];
+  if (r.use) jx.push(r.ge + '、' + r.level + '，最需要的是<b>' + r.use[0] + '</b>——' + esc(r.use[1]) + '。');
+  if (r.ge === '建禄格' || r.ge === '羊刃格') jx.push(r.liqi ? '你的力气往<b>' + r.liqi + '</b>送：天干上透出了' + r.liqi + '，' + esc({ 正官: '在规矩和组织里施展', 正财: '一分一分踏实赚', 偏财: '去抓机会、做生意', 食神: '做手艺、做喜欢的事', 伤官: '靠表达和创新出头' }[r.liqi]) + '。' : '天干上没有官、财、食伤，力气留给自己：适合自己做主、自己干。');
+  jx.push('可以看的职业：' + r.jobs.join('、') + '。');
+  for (const s of r.special) jx.push('这个盘有点特别，可能是<b>' + s.n + '</b>：' + esc(s.say) + '。' + (r.cong && s.n !== '化格' ? '上面的喜忌已经按从格反过来算了。' : '特殊格局先不展开，上面按常见格局来读。') + '想细看，可以请懂行的老师再看看。');
+  $('jx').innerHTML = jx.map(t => '<li>' + t + '</li>').join('');
+  $('foot').innerHTML = (who ? '送检人 ' + esc(who) + '　　' : '') + '送检八字　' + r.pillars.map(gz).join('　') + (r.has4 ? '' : '（没有时辰）') + '<br>—— 以上解读来自谷雨悟道 ——';
+
+  fit();
+  window.addEventListener('resize', fit);
+  $('art').onload = fit;
+  document.fonts && document.fonts.ready.then(fit);
+
+  // 定格过程一条条亮出来，再翻牌
+  const lis = [...$('steps').children];
+  const step = 650;
+  let flipped = false;
+  const flip = () => {
+    if (flipped) return; flipped = true;
+    lis.forEach(li => li.classList.add('on'));
+    $('verdict').textContent = verdict; $('verdict').classList.add('on');
+    const f = $('flipper');
+    if (!q.has('open')) $('stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    f.classList.remove('closed');
+    setTimeout(() => { f.classList.add('done'); $('acts').classList.remove('hidden'); fit(); }, 1150);
+  };
+  if (q.has('open')) { flip(); $('flipper').classList.add('done'); }
+  else {
+    lis.forEach((li, i) => setTimeout(() => li.classList.add('on'), 400 + i * step));
+    const end = 400 + lis.length * step;
+    setTimeout(() => { $('verdict').textContent = verdict; $('verdict').classList.add('on'); $('backHint').textContent = '点击开牌'; }, end + 300);
+    setTimeout(flip, end + 1400);
+    $('scene').onclick = flip;
+  }
+
+  // 翻牌后先在后台把牌画成图，点按钮时立刻调手机的分享面板（苹果手机要求在点击的当下调用）
+  let shot = null;
+  const renderShot = () => shot || (shot = (async () => {
+    await document.fonts.ready;
+    const cv = await html2canvas($('card'), { scale: 2, backgroundColor: null, useCORS: true, onclone: d => { d.getElementById('card').style.transform = 'none'; } });
+    const url = cv.toDataURL('image/png');
+    const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+    return { url, file: new File([blob], '格局鉴定牌-' + (who ? who + '-' : '') + r.ge + '.png', { type: 'image/png' }) };
+  })());
+  const whenOpen = setInterval(() => { if ($('flipper').classList.contains('done')) { clearInterval(whenOpen); renderShot().catch(() => {}); } }, 300);
+  const phone = matchMedia('(pointer: coarse)').matches;
+  const showShot = url => {
+    const box = document.createElement('div');
+    box.className = 'shot';
+    box.innerHTML = '<img alt="鉴定牌"><p>长按图片，可以保存或发给朋友<br>存进相册后就能发朋友圈 · 点空白处关闭</p>';
+    box.querySelector('img').src = url;
+    box.onclick = e => { if (e.target === box) box.remove(); };
+    document.body.appendChild(box);
+  };
+  $('save').onclick = async () => {
+    try {
+      if (phone && shot) {
+        const s = await shot;
+        if (navigator.canShare && navigator.canShare({ files: [s.file] })) {
+          try { await navigator.share({ files: [s.file], title: '格局鉴定牌', text: (who || '我') + '在格局鉴定所测出来了：' + r.ge + '「' + r.tag + '」（切勿当真）' }); return; }
+          catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        showShot(s.url); return;
+      }
+      $('saveHint').textContent = '正在生成图片……';
+      const s = await renderShot();
+      $('saveHint').textContent = '';
+      if (phone) { showShot(s.url); return; }
+      const a = document.createElement('a');
+      a.download = s.file.name;
+      a.href = s.url;
+      a.click();
+      $('saveHint').textContent = '已保存，发到群里看看谁是什么格';
+    } catch (e) {
+      $('saveHint').textContent = '保存没成功，直接截图也行';
+    }
+  };
+}
+
+// 牌按 720 宽设计，高度跟着内容走：按栏宽缩放，牌背跟正面一样高
+function fit() {
+  const w = Math.min(720, $('stage').clientWidth || 720);
+  const k = w / 720;
+  const H = $('card').offsetHeight;
+  $('cardBack').style.height = H + 'px';
+  document.querySelectorAll('.card').forEach(el => { el.style.transform = 'scale(' + k + ')'; });
+  for (const id of ['scene', 'flipper']) { $(id).style.height = H * k + 'px'; $(id).style.width = 720 * k + 'px'; }
+}
+
+// 启动放在最后：上面所有的常量、函数都定义好了再跑
+if (!b) showHome(); else showResult();
+</script>
+</body>
+</html>
