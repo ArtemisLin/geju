@@ -115,6 +115,7 @@ body {
 .steps li.on { opacity: 1; transform: none; }
 .steps li::before { counter-increment: st; content: counter(st); position: absolute; left: 0; top: 8px; width: 22px; height: 22px; border-radius: 6px; background: var(--rose); color: #fff; font-family: var(--pixel); font-size: 14px; display: flex; align-items: center; justify-content: center; }
 .steps li.str::before { content: '强'; background: var(--purple); }
+.steps li.cg::before { content: '配'; background: var(--gold); }
 .verdict { margin-top: 14px; text-align: center; font-family: var(--smiley); font-size: 24px; line-height: 1.45; color: var(--rose); opacity: 0; transition: opacity .5s; }
 .verdict.on { opacity: 1; }
 
@@ -189,6 +190,8 @@ body {
 .yrm i { font-style: normal; }
 .yrm .x { color: var(--rose); }
 .yrm .j { color: var(--soft); }
+.yrm .p { color: var(--mute); }
+.r-平运 { background: #b3aec2; }
 .yr p { font-size: 25px !important; line-height: 1.55 !important; }
 .cb { color: var(--purple); font-weight: 700; }
 
@@ -198,6 +201,9 @@ body {
 .likes .tag { flex: none; width: 48px; height: 48px; border-radius: 12px; color: #fff; font-family: var(--pixel); font-size: 26px; display: flex; align-items: center; justify-content: center; }
 .likes .tag.yi { background: var(--rose); }
 .likes .tag.ji { background: var(--soft); }
+.likes .tag.pi { background: #c9c3d6; }
+.chips.pi .chip { border-color: #e2dcea; color: var(--soft); }
+.chips.pi .chip b { color: var(--mute); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 16px; border-radius: 22px; border: 2px solid var(--line); background: #fff; font-size: 24px; }
 .chip b { font-family: var(--smiley); font-weight: 400; font-size: 30px; color: var(--rose); }
@@ -477,9 +483,8 @@ function thisYear() {
   return y;
 }
 
-const STEP_SAY = { 好运: '这几年大环境帮你，底子厚，可以放开手脚。', 坏运: '这几年大环境有点逆风，稳扎稳打，别硬冲。' };
-const XI = v => (v ? '<i class="x">喜</i>' : '<i class="j">忌</i>');
-const comboTxt = cs => cs.length ? '有<span class="cb">「' + cs.map(c => c.n).join('」「') + '」</span>：' + cs.map(c => c.say).join('；') + '。' : '';
+const STEP_SAY = { 好运: '这几年大环境帮你，底子厚，可以放开手脚。', 坏运: '这几年大环境有点逆风，稳扎稳打，别硬冲。', 平运: '这几年大环境不好不坏。' };
+const MK = m => '<i class="' + (m === '喜' ? 'x' : m === '忌' ? 'j' : 'p') + '">' + m + '</i>';
 
 function luckHTML(r) {
   const L = r.luck;
@@ -490,13 +495,14 @@ function luckHTML(r) {
     if (gp.step) {
       const cur = gi === 0;
       h += '<div class="dyh"><span class="k">' + (cur ? '当前大运' : '下一步大运') + '</span><b>' + gz(gp.gz) + '</b><span class="yrs">' + gp.from + '–' + gp.to + '</span><span class="rb r-' + gp.label + '">' + gp.label + '</span></div>';
-      h += '<p class="dyp">前五年' + gz(gp.gz[0]) + '（' + gp.gS + '）' + (r.xi[gp.gS] ? '喜' : '忌') + '，后五年' + gz(gp.gz[1]) + '（' + gp.zS + '）' + (r.xi[gp.zS] ? '喜' : '忌') + '，' +
-        (cur ? '你现在在' + gp.firstHalf + '五年。' : gp.firstYear + '年进' + gp.firstHalf + '五年。') + STEP_SAY[gp.label] + comboTxt(gp.combos) + '</p>';
+      h += '<p class="dyp">前五年' + gz(gp.ga.ch) + '（' + gp.ga.s + '）' + gp.ga.mark + '，后五年' + gz(gp.zb.ch) + '（' + gp.zb.s + '）' + gp.zb.mark + '，' +
+        (cur ? '你现在在' + gp.firstHalf + '五年。' : gp.firstYear + '年进' + gp.firstHalf + '五年。') + STEP_SAY[gp.label] + '管事的是' + gz(gp.lead.reasons.join('；')) + '。</p>';
     }
     for (const x of gp.rows) {
+      const why = [...x.a.reasons, ...x.b.reasons, ...x.extra].join('；');
       h += '<div class="yr"><div class="yrh"><span class="y">' + x.y + '</span><span class="gz">' + gz(x.gz) + '</span><span class="rb r-' + x.res + '">' + x.resName + '</span></div>' +
-        '<div class="yrm">' + gz(x.gz[0]) + x.a + XI(r.xi[x.a]) + '　' + gz(x.gz[1]) + x.b + XI(r.xi[x.b]) + (x.step ? '　｜　运：' + gz(x.yunCh) + x.yunSS + XI(x.yun) : '') + '</div>' +
-        '<p>' + x.say + comboTxt(x.combos) + x.tip + (x.chong ? '流年' + gz(x.gz[1]) + '冲你的日支' + gz(x.dz) + '，容易有变化（比如搬家、换工作），提前留点余地。' : '') + '</p></div>';
+        '<div class="yrm">' + gz(x.a.ch) + x.a.s + MK(x.a.mark) + '　' + gz(x.b.ch) + x.b.s + MK(x.b.mark) + (x.yun ? '　｜　运：' + gz(x.yun.ch) + x.yun.s + MK(x.yun.mark) : '') + '</div>' +
+        '<p>' + gz(why) + '。' + x.say + x.tip + (x.chong ? '流年' + gz(x.gz[1]) + '冲你的日支' + gz(x.dz) + '，容易有变化（比如搬家、换工作），提前留点余地。' : '') + '</p></div>';
     }
     h += '</div>';
   });
@@ -518,9 +524,11 @@ function showResult() {
   $('pillars').innerHTML = r.pillars.map((p, i) =>
     '<div class="col' + (i === 2 ? ' day' : '') + '"><div class="pos">' + pos[i] + '柱</div><div class="gz">' + gz(p[0]) + '<br>' + gz(p[1]) + '</div><div class="ss">' + r.tg[i] + '<br>' + r.zg[i] + '</div></div>'
   ).join('') + (r.has4 ? '' : '<div class="col"><div class="pos">时柱</div><div class="gz">？<br>？</div><div class="ss">没有时辰</div></div>');
-  const sideTxt = r.cong ? '接近' + r.cong + '，喜忌反过来看' : (r.strongSide ? '算身强' : '算身弱');
+  const sideTxt = r.cong ? '接近' + r.cong + '，按从格看' : (r.strong ? '算身强' : '算身弱');
   $('steps').innerHTML = r.steps.map(s => '<li>' + gz(s) + '</li>').join('') +
-    '<li class="str">强弱值 ' + Math.round(r.index) + ' · ' + r.level + '，' + sideTxt + '（跟五行喜忌卡同一套算法）</li>';
+    '<li class="str">强弱值 ' + Math.round(r.index) + ' · ' + r.level + '，' + sideTxt + '（跟五行喜忌卡同一套算法）</li>' +
+    (r.cong ? '' : '<li class="cg">' + gz(r.sub.why) + ' → ' + r.sub.name + '</li>') +
+    (r.sub.balance ? '<li class="cg">' + esc(r.sub.balance) + '</li>' : '');
   const verdict = '经鉴定：' + r.ge + '\n「' + r.tag + '」';
   $('verdict').style.whiteSpace = 'pre-line';
 
@@ -539,15 +547,17 @@ function showResult() {
   $('luck').innerHTML = luckHTML(r);
   $('featH').textContent = r.ge + '的特征';
   $('feat').textContent = r.feat;
-  $('likes').innerHTML = '<div class="row"><span class="tag yi">喜</span><div class="chips">' + r.like.map(x => '<span class="chip"><b>' + x.n + '</b>' + x.w + '</span>').join('') + '</div></div>' +
-    '<div class="row"><span class="tag ji">忌</span><div class="chips ji">' + r.dislike.map(x => '<span class="chip"><b>' + x.n + '</b>' + x.w + '</span>').join('') + '</div></div>';
-  $('notes').textContent = r.notes.length ? r.notes.join('；') + '。' : '';
+  const chipRow = (tag, cls, list) => list.length ? '<div class="row"><span class="tag ' + cls + '">' + tag + '</span><div class="chips ' + cls + '">' + list.map(x => '<span class="chip"><b>' + x.n + '</b>' + x.w + '</span>').join('') + '</div></div>' : '';
+  $('likes').innerHTML = chipRow('喜', 'yi', r.like) + chipRow('平', 'pi', r.mid) + chipRow('忌', 'ji', r.dislike);
+  $('notes').textContent = r.cong ? '' : '喜忌由格来定：' + r.ge + '，' + r.sub.name + '。';
   $('todo').innerHTML = r.todo.map(t => '<li>' + esc(t) + '</li>').join('');
   const jx = [];
-  if (r.use) jx.push(r.ge + '、' + r.level + '，最需要的是<b>' + r.use[0] + '</b>——' + esc(r.use[1]) + '。');
-  if (r.ge === '建禄格' || r.ge === '羊刃格') jx.push(r.liqi ? '你的力气往<b>' + r.liqi + '</b>送：天干上透出了' + r.liqi + '，' + esc({ 正官: '在规矩和组织里施展', 正财: '一分一分踏实赚', 偏财: '去抓机会、做生意', 食神: '做手艺、做喜欢的事', 伤官: '靠表达和创新出头' }[r.liqi]) + '。' : '天干上没有官、财、食伤，力气留给自己：适合自己做主、自己干。');
+  if (!r.cong) {
+    jx.push('你是' + r.ge + '，<b>' + r.sub.name + '</b>：' + gz(r.sub.why) + '。' + (r.sub.balance ? esc(r.sub.balance) + '。' : ''));
+    jx.push('《子平真诠》：「' + esc(r.sub.quote) + '」');
+  }
   jx.push('可以看的职业：' + r.jobs.join('、') + '。');
-  for (const s of r.special) jx.push('这个盘有点特别，可能是<b>' + s.n + '</b>：' + esc(s.say) + '。' + (r.cong && s.n !== '化格' ? '上面的喜忌已经按从格反过来算了。' : '特殊格局先不展开，上面按常见格局来读。') + '想细看，可以请懂行的老师再看看。');
+  for (const s of r.special) jx.push('这个盘有点特别，可能是<b>' + s.n + '</b>：' + esc(s.say) + '。' + (r.cong && s.n !== '化格' ? '上面的喜忌已经按从格来算。' : '特殊格局先不展开，上面按常见格局来读。') + '想细看，可以请懂行的老师再看看。');
   $('jx').innerHTML = jx.map(t => '<li>' + t + '</li>').join('');
   $('foot').innerHTML = (who ? '送检人 ' + esc(who) + '　　' : '') + '送检八字　' + r.pillars.map(gz).join('　') + (r.has4 ? '' : '（没有时辰）') + '<br>—— 以上解读来自谷雨悟道 ——';
 
