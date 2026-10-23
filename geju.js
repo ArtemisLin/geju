@@ -527,12 +527,39 @@
       for (const x of st.I.filter(x => x.l === 'z')) {
         if (pairIn(ch, x.ch, CHONG)) {
           const w = [0.8, 1, 0.5, 0.4][x.i];
-          if (keyX(x) || x.i === 1) { v -= w; reasons.push('冲' + posName(x) + (x.i === 1 ? '（月令）' : '') + (x.i <= 1 ? '，来得急' : '')); }
+          const lx = st.L[x.cat];
+          if (keyX(x) || lx > 0) { v -= w; reasons.push('冲' + posName(x) + (x.i === 1 ? '（月令）' : '') + (x.i <= 1 ? '，来得急' : '')); }
+          else if (lx < 0) { v += 0.5 * w; reasons.push('冲开' + posName(x) + '（' + x.ss + '是忌）'); }   // 冲去忌神反而好
           if (st.L[cat] < 0) v -= 0.5 * w;               // 运既忌而又冲则重
         } else if (pairIn(ch, x.ch, XING) && (keyX(x) || x.i === 1)) { v -= 0.5; reasons.push('跟' + posName(x) + '相刑'); }
       }
     }
     return { ch, isG, s, cat, v: Math.round(v * 100) / 100, mark: markOf(v), reasons };
+  }
+
+  /* ---------- 合局：原局、大运、流年的地支凑成三合、三会、半合 ---------- */
+  const SANHE = [['申子辰', '水'], ['亥卯未', '木'], ['寅午戌', '火'], ['巳酉丑', '金']];
+  const SANHUI = [['亥子丑', '水'], ['寅卯辰', '木'], ['巳午未', '火'], ['申酉戌', '金']];
+  // base：已经在的地支（原局，算流年时再加大运）；add：新来的那个字。只算新来的字凑出来的局
+  function heJuOf(P, base, add, st) {
+    const dm = P[2][0];
+    const all = [...base, add];
+    const level = (inSet, members, kind) => inSet.length === 3 ? 1 : kind === '三合' && inSet.length === 2 && inSet.includes(members[1]) ? 0.4 : 0;   // 半合要带子午卯酉
+    let best = null;
+    const consider = (set, wx, kind, mult) => {
+      const members = [...set];
+      if (!members.includes(add)) return;
+      const inAll = members.filter(c => all.includes(c)), inBase = members.filter(c => base.includes(c));
+      const k = (level(inAll, members, kind) - level(inBase, members, kind)) * mult;   // 新来的字让局成了多少
+      if (k <= 0) return;
+      const cats = [...new Set([...GAN].filter(c => GAN_WX[c] === wx).map(c => CAT[ss(dm, c)]))];
+      const lvAvg = cats.reduce((t, c) => t + st.L[c], 0) / cats.length;
+      const v = Math.round(lvAvg * k * 100) / 100;
+      if (!best || Math.abs(v) > Math.abs(best.v)) best = { v, say: (inAll.length === 3 ? members.join('') + kind : inAll.join('') + '半合') + wx + '局，' + cats.join('、') + (lvAvg > 0 ? '变强，正是你要的' : lvAvg < 0 ? '变强，是你怕的' : '变强') };
+    };
+    SANHE.forEach(([set, wx]) => consider(set, wx, '三合', 1.5));
+    SANHUI.forEach(([set, wx]) => consider(set, wx, '三会', 1.5));
+    return best && best.v !== 0 ? best : null;
   }
 
   /* ---------- 大运流年：只看最近三年 ---------- */
@@ -554,9 +581,16 @@
       const a = judgeChar(gz[0], true, P, st), b = judgeChar(gz[1], false, P, st);
       const step = stepOf(y);
       let yun = null, half = '';
-      if (step) { half = y - step.startYear < 5 ? '前' : '后'; yun = half === '前' ? judgeChar(step.gz[0], true, P, st) : judgeChar(step.gz[1], false, P, st); }
+      if (step) {
+        half = y - step.startYear < 5 ? '前' : '后';
+        yun = half === '前' ? judgeChar(step.gz[0], true, P, st) : judgeChar(step.gz[1], false, P, st);
+        const yh = heJuOf(P, P.map(p => p[1]), step.gz[1], st);
+        if (yh) { const k = half === '后' ? 1 : 0.5; yun = { ...yun, v: Math.round((yun.v + yh.v * k) * 100) / 100, reasons: [...yun.reasons, '大运' + yh.say] }; yun.mark = markOf(yun.v); }
+      }
       let score = a.v + b.v;
       const extra = [];
+      const hj = heJuOf(P, [...P.map(p => p[1]), ...(step ? [step.gz[1]] : [])], gz[1], st);
+      if (hj) { score += hj.v; extra.push(hj.say); }
       // 原局本来就重的那一类，大运、流年又一起来：过头
       if (yun && st.heavy.includes(yun.cat) && (a.cat === yun.cat || b.cat === yun.cat)) { score -= 1.5; extra.push(yun.cat + '原局就重，大运流年又一起来，过头了'); }
       const nian = score >= 1 ? '喜' : score <= -1 ? '忌' : '平';
@@ -580,7 +614,7 @@
         gp = { key, step: r.step, rows: [] };
         if (r.step) {
           const s = r.step, ga = judgeChar(s.gz[0], true, P, st), zb = judgeChar(s.gz[1], false, P, st);
-          const lead = r.half === '前' ? ga : zb;
+          const lead = r.yun;                       // 这一年管事的字，已算上大运凑成的合局
           const label = lead.v >= 0.6 ? '好运' : lead.v <= -0.6 ? '坏运' : '平运';
           Object.assign(gp, { gz: s.gz, from: s.startYear, to: s.startYear + 9, ga, zb, label, firstHalf: r.half, firstYear: r.y, lead });
         }
